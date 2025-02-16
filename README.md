@@ -1,4 +1,7 @@
-# Laravel Bazooka 🔫
+<div align="center">
+  <img src="/src/bazooka-laravel.png" alt="Bazooka Logo" width="150" height="50" />
+  <h1>Laravel Bazooka 🔫</h1>
+</div>
 
 **Inject chaos into your Laravel application with ease!**
 
