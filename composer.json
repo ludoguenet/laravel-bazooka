@@ -1,0 +1,58 @@
+{
+    "name": "laraveljutsu/bazooka",
+    "description": "Bazooka is a Laravel package that allows developers to simulate controlled failures (like API timeouts) inside their application for resilience testing.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "LaravelJutsu\\Bazooka\\": "src/",
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "ludoguenet",
+            "email": "ludovicguenet@gmx.com"
+        }
+    ],
+  "require": {
+      "php": ">=8.2"
+  },
+    "require-dev": {
+        "laravel/pint": "^1.20",
+        "larastan/larastan": "^3.0",
+        "pestphp/pest": "^3.7",
+        "orchestra/testbench": "^9.10"
+    },
+    "scripts": {
+      "pint": [
+        "@php ./vendor/bin/pint"
+    ],
+    "stan": [
+        "@php ./vendor/bin/phpstan analyse"
+    ],
+    "pest": [
+        "@php ./vendor/bin/pest"
+    ],
+    "qa": [
+        "@php ./vendor/bin/pint",
+        "@php ./vendor/bin/phpstan analyse",
+        "@php ./vendor/bin/pest"
+    ]
+    },
+    "extra": {
+      "laravel": {
+          "providers": [
+              "LaravelJutsu\\Bazooka\\BazookaServiceProvider"
+          ],
+          "aliases": {
+              "Bazooka": "LaravelJutsu\\Bazooka\\Facades\\Bazooka"
+          }
+      }
+  },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
