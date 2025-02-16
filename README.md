@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/ludoguenet/laravel-bazooka/blob/main/art/bazooka-laravel.png" alt="Bazooka Logo" width="150" height="50" />
+  <img src="https://github.com/ludoguenet/laravel-bazooka/blob/main/art/bazooka-laravel.png" alt="Bazooka Logo" width="500" />
   <h1>Laravel Bazooka 🔫</h1>
 </div>
 
