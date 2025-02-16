@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="https://github.com/ludoguenet/laravel-bazooka/blob/main/art/bazooka-laravel.png" alt="Bazooka Logo" width="500" />
+  <img src="https://github.com/ludoguenet/laravel-bazooka/blob/main/art/laravel-bazooka.png" alt="Bazooka Logo" width="500" />
   <h1>Laravel Bazooka 🔫</h1>
 </div>
 
 **Inject chaos into your Laravel application with ease!**
 
-Laravel Jutsu Bazooka is a powerful Laravel package that allows you to inject controlled chaos into your application. Whether you're testing resilience, simulating failures, or just having fun, Bazooka provides a simple and configurable way to disrupt your application's behavior.
+Laravel Bazooka is a powerful Laravel package that allows you to inject controlled chaos into your application. Whether you're testing resilience, simulating failures, or just having fun, Bazooka provides a simple and configurable way to disrupt your application's behavior.
 
 ---
 
