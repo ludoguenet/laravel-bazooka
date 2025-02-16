@@ -1,0 +1,61 @@
+# Ignore the Composer vendor directory
+/vendor/
+
+# Ignore Composer's lock file (if applicable)
+/composer.lock
+
+# Ignore IDE-specific files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Ignore local environment files
+/.env
+/.env.example
+
+# Ignore Laravel-specific files
+/bootstrap/cache/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+/storage/logs/
+
+# Ignore npm and frontend build files
+/node_modules/
+/public/css/
+/public/js/
+/public/hot
+/public/storage
+/public/mix-manifest.json
+
+# Ignore testing-related files
+/coverage/
+.phpunit.result.cache
+
+# Ignore macOS-specific files
+.DS_Store
+
+# Ignore Composer's autoload files
+/autoload.php
+
+# Ignore local development logs
+*.log
+*.log.*
+
+# Ignore compiled files
+*.compiled.php
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore local configuration overrides
+/config/*.local.php
+/config/*.local.yaml
+/config/*.local.yml
+
+# Ignore PHPUnit cache
+.phpunit.cache
