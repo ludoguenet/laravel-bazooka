@@ -25,8 +25,9 @@ class RemoveChaosPointsCommand extends Command
             }
 
             $content = $file->getContents();
-            $pattern = '/(\s*)\{(\s*)\\\\LaravelJutsu\\\\Bazooka\\\\Facades\\\\Bazooka::chaos\(\);(\s*)([^}]+)\}/';
-            $replacement = '{$1$4}';
+            $pattern = '/(\s*)\{[\s\n]*\\\\LaravelJutsu\\\\Bazooka\\\\Facades\\\\Bazooka::chaos\(\);[\s\n]*(.+?)\}/s';
+            $replacement = '{
+        $2}';
             $newContent = preg_replace($pattern, $replacement, $content, -1, $count);
 
             if ($count > 0) {
