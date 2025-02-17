@@ -6,7 +6,7 @@ namespace LaravelJutsu\Bazooka\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
-class BazookaManager extends Facade
+class Bazooka extends Facade
 {
     protected static function getFacadeAccessor()
     {
