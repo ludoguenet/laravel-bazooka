@@ -27,10 +27,15 @@ You can install the package via Composer:
 composer require laravel-jutsu/bazooka
 ```
 
-Publish the configuration file:
+Laravel will automatically register the service provider.
 
-```bash
-php artisan vendor:publish --provider="LaravelJutsu\Bazooka\BazookaServiceProvider"
+If needed, add to config/app.php providers array:
+
+```php
+'providers' => [
+    // ...
+    LaravelJutsu\Bazooka\BazookaServiceProvider::class,
+],
 ```
 
 ---
