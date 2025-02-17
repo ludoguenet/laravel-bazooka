@@ -25,10 +25,10 @@ class RemoveChaosPointsCommand extends Command
             }
 
             $content = $file->getContents();
-            // Pattern pour capturer l'indentation, la ligne Bazooka::chaos(), et le reste du code
-            $pattern = '/(\s*)\{[\s\n]*\\\\LaravelJutsu\\\\Bazooka\\\\Facades\\\\Bazooka::chaos\(\);[\s\n]*([^}]+)\}/s';
-            // Remplacement pour supprimer uniquement la ligne Bazooka::chaos() et conserver le reste
-            $replacement = '$1{'.PHP_EOL.'$1    $2'.PHP_EOL.'$1}';
+
+            $pattern = '/^\s*\\\\LaravelJutsu\\\\Bazooka\\\\Facades\\\\Bazooka::chaos\(\);\s*$/m';
+            $replacement = '';
+
             $newContent = preg_replace($pattern, $replacement, $content, -1, $count);
 
             if ($count > 0) {
