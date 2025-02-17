@@ -181,7 +181,7 @@ class InjectChaosCommand extends Command
                 $stmt->expr instanceof Node\Expr\StaticCall &&
                 $stmt->expr->class instanceof Node\Name &&
                 $stmt->expr->name instanceof Node\Identifier &&
-                $stmt->expr->class->toString() === 'Bazooka' &&
+                $stmt->expr->class->toString() === 'LaravelJutsu\\Bazooka\\Facades\\Bazooka' &&
                 $stmt->expr->name->toString() === 'chaos') {
                 return true;
             }
@@ -194,7 +194,7 @@ class InjectChaosCommand extends Command
     {
         $chaosCall = new Node\Stmt\Expression(
             new Node\Expr\StaticCall(
-                new Node\Name('Bazooka'),
+                new Node\Name\FullyQualified('LaravelJutsu\\Bazooka\\Facades\\Bazooka'),
                 'chaos'
             )
         );

@@ -137,7 +137,7 @@ test('inject command prevents duplicate chaos calls', function () {
     {
         public function index()
         {
-            Bazooka::chaos();
+            \LaravelJutsu\Bazooka\Facades\Bazooka::chaos();
             return 'Hello World';
         }
     }
@@ -177,7 +177,7 @@ test('inject command injects chaos into controllers', function () {
         ->assertExitCode(0);
 
     $modifiedContent = File::get(app_path('Http/Controllers/TestController.php'));
-    expect($modifiedContent)->toContain('Bazooka::chaos();');
+    expect($modifiedContent)->toContain('\LaravelJutsu\Bazooka\Facades\Bazooka::chaos()');
 });
 
 /*
@@ -238,7 +238,7 @@ test('remove command removes chaos points', function () {
     {
         public function index()
         {
-            Bazooka::chaos();
+            \LaravelJutsu\Bazooka\Facades\Bazooka::chaos();
             return 'Hello World';
         }
     }
@@ -252,7 +252,7 @@ test('remove command removes chaos points', function () {
         ->assertExitCode(0);
 
     $modifiedContent = File::get(app_path('Http/Controllers/TestController.php'));
-    expect($modifiedContent)->not->toContain('Bazooka::chaos();');
+    expect($modifiedContent)->not->toContain('\LaravelJutsu\Bazooka\Facades\Bazooka::chaos()');
 });
 
 test('remove command has dry-run option', function () {
