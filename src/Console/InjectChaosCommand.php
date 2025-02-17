@@ -208,8 +208,17 @@ class InjectChaosCommand extends Command
 
     private function saveModifiedFile(SplFileInfo $file, array $ast): void
     {
-        $printer = new PrettyPrinter\Standard;
+        $printer = new PrettyPrinter\Standard(['newline_at_end_of_file' => true]);
         $newCode = $printer->prettyPrintFile($ast);
+
+        $newCode = preg_replace('/}\n(?!\s*\/\*\*|\s*private|\s*protected|\s*public|\s*function|\s*\}|\s*$)/m', "}\n\n", $newCode);
+
+        $newCode = preg_replace('/}\n\s*\/\*\*/m', "}\n\n    /**", $newCode);
+
+        if (! str_ends_with($newCode, "\n")) {
+            $newCode .= "\n";
+        }
+
         File::put($file->getPathname(), $newCode);
     }
 }
