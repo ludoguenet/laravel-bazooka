@@ -267,7 +267,7 @@ test('remove command has dry-run option', function () {
     {
         public function index()
         {
-            \\LaravelJutsu\Bazooka\Facades\Bazooka::chaos();
+            \LaravelJutsu\Bazooka\Facades\Bazooka::chaos();
             return 'Hello World';
         }
     }
