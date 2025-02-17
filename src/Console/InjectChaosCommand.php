@@ -163,16 +163,9 @@ class InjectChaosCommand extends Command
             'newline_at_end_of_file' => true,
         ]);
 
-        // Génération du code initial
         $newCode = $printer->prettyPrintFile($ast);
-
-        // Phase 1: Normalisation - supprime tous les espaces et lignes vides excessifs
         $newCode = preg_replace('/}\n\s*\n\s*(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n", $newCode);
-
-        // Phase 2: Ajoute exactement une ligne vide
         $newCode = preg_replace('/}\n(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n\n", $newCode);
-
-        // Phase 3: S'assure qu'il n'y a qu'une seule ligne vide à la fin du fichier
         $newCode = rtrim($newCode)."\n";
 
         File::put($file->getPathname(), $newCode);
@@ -184,7 +177,6 @@ class InjectChaosCommand extends Command
             $method->stmts = [];
         }
 
-        // Création de l'appel à Bazooka::chaos()
         $chaosCall = new Expression(
             new StaticCall(
                 new FullyQualified('LaravelJutsu\\Bazooka\\Facades\\Bazooka'),
@@ -192,11 +184,10 @@ class InjectChaosCommand extends Command
             )
         );
 
-        // Ajout de l'appel et d'une ligne vide ensuite
         array_unshift(
             $method->stmts,
             $chaosCall,
-            new Node\Stmt\Nop  // Ligne vide après l'appel
+            new Node\Stmt\Nop
         );
     }
 
