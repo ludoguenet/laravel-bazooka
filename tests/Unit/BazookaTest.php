@@ -119,8 +119,25 @@ test('inject command respects enabled configuration', function () {
 test('inject command handles non-existent controllers', function () {
     Config::set('bazooka.enabled', true);
 
+    $controllerContent = <<<'PHP'
+    <?php
+
+    namespace App\Http\Controllers;
+
+    class ExistingController
+    {
+        public function index()
+        {
+            return 'Hello World';
+        }
+    }
+    PHP;
+
+    File::put(app_path('Http/Controllers/ExistingController.php'), $controllerContent);
+
     $this->artisan(InjectChaosCommand::class, ['--controller' => ['NonExistentController']])
-        ->expectsOutput('Controller not found: NonExistentController')
+        ->expectsOutput('Warning: Controller not found: NonExistentController')
+        ->expectsOutput('No controllers found to process.')
         ->assertExitCode(1);
 });
 
@@ -146,7 +163,7 @@ test('inject command prevents duplicate chaos calls', function () {
     File::put(app_path('Http/Controllers/TestController.php'), $controllerContent);
 
     $this->artisan(InjectChaosCommand::class)
-        ->expectsOutput('Processed 1 controllers.')
+        ->expectsOutput('Processed 1 controller.')
         ->expectsOutput('Injected chaos into 0 methods.')
         ->assertExitCode(0);
 });
@@ -172,8 +189,8 @@ test('inject command injects chaos into controllers', function () {
     File::put(app_path('Http/Controllers/TestController.php'), $controllerContent);
 
     $this->artisan(InjectChaosCommand::class)
-        ->expectsOutput('Processed 1 controllers.')
-        ->expectsOutput('Injected chaos into 1 methods.')
+        ->expectsOutput('Processed 1 controller.')
+        ->expectsOutput('Injected chaos into 1 method.')
         ->assertExitCode(0);
 
     $modifiedContent = File::get(app_path('Http/Controllers/TestController.php'));

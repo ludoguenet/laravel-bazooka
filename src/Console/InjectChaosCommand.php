@@ -8,6 +8,9 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use PhpParser\Node;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
@@ -37,10 +40,7 @@ class InjectChaosCommand extends Command
             return 1;
         }
 
-        $this->info("Using probability: {$this->probability}");
-
-        $controllerPath = app_path('Http/Controllers');
-        $files = $this->getControllerFiles($controllerPath);
+        $files = $this->getControllerFiles(app_path('Http/Controllers'));
 
         if (empty($files)) {
             $this->error('No controllers found to process.');
@@ -50,44 +50,42 @@ class InjectChaosCommand extends Command
 
         [$processedCount, $injectedCount] = $this->processFiles($files);
 
-        $this->info("Processed {$processedCount} controllers.");
-        $this->info("Injected chaos into {$injectedCount} methods.");
+        $this->info(sprintf(
+            'Processed %d controller%s.',
+            $processedCount,
+            $processedCount === 1 ? '' : 's'
+        ));
+
+        $this->info(sprintf(
+            'Injected chaos into %d method%s.',
+            $injectedCount,
+            $injectedCount === 1 ? '' : 's'
+        ));
 
         return 0;
     }
 
-    private function getControllerFiles(string $controllerPath): array
+    private function getControllerFiles(string $path): array
     {
         $controllers = $this->option('controller');
 
-        return empty($controllers)
-            ? $this->getAllControllers($controllerPath)
-            : $this->getSpecificControllers($controllerPath, $controllers);
+        return empty($controllers) ? $this->getAllControllers($path) : $this->getSpecificControllers($path, $controllers);
     }
 
     private function getAllControllers(string $path): array
     {
-        if (! File::isDirectory($path)) {
-            $this->warn("Controllers directory not found: {$path}");
-
-            return [];
-        }
-
-        return File::allFiles($path);
+        return File::isDirectory($path) ? File::allFiles($path) : [];
     }
 
-    private function getSpecificControllers(string $controllerPath, array $controllerNames): array
+    private function getSpecificControllers(string $path, array $controllerNames): array
     {
         $files = [];
-
-        foreach ($controllerNames as $controllerName) {
-            $relativePath = str_replace('\\', '/', $controllerName).'.php';
-            $fullPath = $controllerPath.'/'.$relativePath;
-
+        foreach ($controllerNames as $name) {
+            $fullPath = $path.'/'.str_replace('\\', '/', $name).'.php';
             if (File::exists($fullPath)) {
-                $files[] = new SplFileInfo($fullPath, $relativePath, $fullPath);
+                $files[] = new SplFileInfo($fullPath, basename($fullPath), $fullPath);
             } else {
-                $this->warn("Controller not found: {$controllerName}");
+                $this->warn("Warning: Controller not found: {$name}");
             }
         }
 
@@ -96,17 +94,13 @@ class InjectChaosCommand extends Command
 
     private function processFiles(array $files): array
     {
-        $processedCount = 0;
-        $injectedCount = 0;
+        $processedCount = $injectedCount = 0;
 
         foreach ($files as $file) {
-            if ($file->getExtension() !== 'php') {
-                continue;
+            if ($file->getExtension() === 'php') {
+                $injectedCount += $this->injectChaosIntoFile($file);
+                $processedCount++;
             }
-
-            $result = $this->injectChaosIntoFile($file);
-            $processedCount++;
-            $injectedCount += $result;
         }
 
         return [$processedCount, $injectedCount];
@@ -114,24 +108,18 @@ class InjectChaosCommand extends Command
 
     private function injectChaosIntoFile(SplFileInfo $file): int
     {
-        $parser = (new ParserFactory)->createForNewestSupportedVersion();
-        $traverser = new NodeTraverser;
-        $traverser->addVisitor(new ParentConnectingVisitor);
-
-        $code = $file->getContents();
-        $injectedCount = 0;
-
         try {
-            $ast = $parser->parse($code);
-            $ast = $traverser->traverse($ast);
+            $parser = (new ParserFactory)->createForNewestSupportedVersion();
+            $traverser = new NodeTraverser;
+            $traverser->addVisitor(new ParentConnectingVisitor);
 
+            $ast = $traverser->traverse($parser->parse($file->getContents()));
+            $injectedCount = 0;
             $modified = false;
 
             foreach ($ast as $node) {
                 if ($node instanceof Namespace_) {
-                    $modified = $this->processNamespaceNode($node, $modified, $injectedCount);
-                } elseif ($node instanceof Node\Stmt\Class_) {
-                    $modified = $this->processClassNode($node, $modified, $injectedCount);
+                    $modified = $this->processNamespaceNode($node, $injectedCount);
                 }
             }
 
@@ -144,81 +132,87 @@ class InjectChaosCommand extends Command
         } catch (\Exception $e) {
             $this->error("Error processing {$file->getRelativePathname()}: {$e->getMessage()}");
 
-            return 1;
+            return 0;
         }
     }
 
-    private function processNamespaceNode(Namespace_ $namespace, bool $modified, int &$injectedCount): bool
+    private function processNamespaceNode(Namespace_ $namespace, int &$injectedCount): bool
     {
+        $modified = false;
         foreach ($namespace->stmts as $stmt) {
             if ($stmt instanceof Node\Stmt\Class_) {
-                $modified = $this->processClassNode($stmt, $modified, $injectedCount);
+                foreach ($stmt->stmts as $method) {
+                    if ($method instanceof Node\Stmt\ClassMethod
+                        && ! $this->methodHasChaos($method)
+                        && mt_rand() / mt_getrandmax() < $this->probability
+                    ) {
+                        $this->injectChaosIntoMethod($method);
+                        $modified = true;
+                        $injectedCount++;
+                    }
+                }
             }
         }
 
         return $modified;
     }
 
-    private function processClassNode(Node\Stmt\Class_ $class, bool $modified, int &$injectedCount): bool
+    private function saveModifiedFile(SplFileInfo $file, array $ast): void
     {
-        foreach ($class->stmts as $stmt) {
-            if ($stmt instanceof Node\Stmt\ClassMethod &&
-                ! $this->methodHasChaos($stmt) &&
-                mt_rand() / mt_getrandmax() < $this->probability) {
-                $this->injectChaosIntoMethod($stmt);
-                $modified = true;
-                $injectedCount++;
-            }
+        $printer = new PrettyPrinter\Standard([
+            'newline_at_end_of_file' => true,
+        ]);
+
+        // Génération du code initial
+        $newCode = $printer->prettyPrintFile($ast);
+
+        // Phase 1: Normalisation - supprime tous les espaces et lignes vides excessifs
+        $newCode = preg_replace('/}\n\s*\n\s*(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n", $newCode);
+
+        // Phase 2: Ajoute exactement une ligne vide
+        $newCode = preg_replace('/}\n(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n\n", $newCode);
+
+        // Phase 3: S'assure qu'il n'y a qu'une seule ligne vide à la fin du fichier
+        $newCode = rtrim($newCode)."\n";
+
+        File::put($file->getPathname(), $newCode);
+    }
+
+    private function injectChaosIntoMethod(Node\Stmt\ClassMethod $method): void
+    {
+        if (! isset($method->stmts)) {
+            $method->stmts = [];
         }
 
-        return $modified;
+        // Création de l'appel à Bazooka::chaos()
+        $chaosCall = new Expression(
+            new StaticCall(
+                new FullyQualified('LaravelJutsu\\Bazooka\\Facades\\Bazooka'),
+                'chaos'
+            )
+        );
+
+        // Ajout de l'appel et d'une ligne vide ensuite
+        array_unshift(
+            $method->stmts,
+            $chaosCall,
+            new Node\Stmt\Nop  // Ligne vide après l'appel
+        );
     }
 
     private function methodHasChaos(Node\Stmt\ClassMethod $method): bool
     {
         foreach ($method->stmts ?? [] as $stmt) {
-            if ($stmt instanceof Node\Stmt\Expression &&
-                $stmt->expr instanceof Node\Expr\StaticCall &&
-                $stmt->expr->class instanceof Node\Name &&
-                $stmt->expr->name instanceof Node\Identifier &&
-                $stmt->expr->class->toString() === 'LaravelJutsu\\Bazooka\\Facades\\Bazooka' &&
-                $stmt->expr->name->toString() === 'chaos') {
+            if ($stmt instanceof Expression
+                && $stmt->expr instanceof StaticCall
+                && $stmt->expr->class instanceof Node\Name
+                && $stmt->expr->class->toString() === 'LaravelJutsu\\Bazooka\\Facades\\Bazooka'
+                && $stmt->expr->name->toString() === 'chaos'
+            ) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    private function injectChaosIntoMethod(Node\Stmt\ClassMethod $method): void
-    {
-        $chaosCall = new Node\Stmt\Expression(
-            new Node\Expr\StaticCall(
-                new Node\Name\FullyQualified('LaravelJutsu\\Bazooka\\Facades\\Bazooka'),
-                'chaos'
-            )
-        );
-
-        if (! isset($method->stmts)) {
-            $method->stmts = [];
-        }
-
-        array_unshift($method->stmts, $chaosCall);
-    }
-
-    private function saveModifiedFile(SplFileInfo $file, array $ast): void
-    {
-        $printer = new PrettyPrinter\Standard(['newline_at_end_of_file' => true]);
-        $newCode = $printer->prettyPrintFile($ast);
-
-        $newCode = preg_replace('/}\n(?!\s*\/\*\*|\s*private|\s*protected|\s*public|\s*function|\s*\}|\s*$)/m', "}\n\n", $newCode);
-
-        $newCode = preg_replace('/}\n\s*\/\*\*/m', "}\n\n    /**", $newCode);
-
-        if (! str_ends_with($newCode, "\n")) {
-            $newCode .= "\n";
-        }
-
-        File::put($file->getPathname(), $newCode);
     }
 }
