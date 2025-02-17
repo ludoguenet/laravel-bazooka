@@ -44,6 +44,12 @@ If needed, add to config/app.php providers array:
 
 After publishing the configuration file, you can customize the behavior of Bazooka by editing `config/bazooka.php`:
 
+To publish the configuration file, run the following command:
+
+```bash
+php artisan vendor:publish --provider="LaravelJutsu\Bazooka\BazookaServiceProvider" --tag="config"
+```
+
 ```php
 return [
     'enabled' => env('BAZOOKA_ENABLED', true), // Enable or disable Bazooka globally
@@ -153,7 +159,7 @@ class TestController
 {
     public function index()
     {
-        Bazooka::chaos(); // Chaos point injected here
+        \LaravelJutsu\Bazooka\Facades\Bazooka::chaos(); // Chaos point injected here
         return 'Hello World';
     }
 }
