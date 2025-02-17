@@ -267,7 +267,7 @@ test('remove command has dry-run option', function () {
     {
         public function index()
         {
-            Bazooka::chaos();
+            \\LaravelJutsu\Bazooka\Facades\Bazooka::chaos();
             return 'Hello World';
         }
     }
@@ -281,5 +281,5 @@ test('remove command has dry-run option', function () {
         ->assertExitCode(0);
 
     $modifiedContent = File::get(app_path('Http/Controllers/TestController.php'));
-    expect($modifiedContent)->toContain('Bazooka::chaos();');
+    expect($modifiedContent)->toContain('\LaravelJutsu\Bazooka\Facades\Bazooka::chaos();');
 });
