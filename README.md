@@ -120,19 +120,11 @@ Bazooka comes with built-in disruption strategies. You can configure them in `co
 
 ### Latency Disruption
 
-Add a random delay to your application:
-
-```php
-Bazooka::chaos(); // Adds a delay between min_delay and max_delay
-```
+Add a random delay to your application
 
 ### Exception Disruption
 
 Throw a configured exception:
-
-```php
-Bazooka::chaos(); // Throws a RuntimeException with the configured message
-```
 
 ---
 
