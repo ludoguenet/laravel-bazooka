@@ -134,11 +134,11 @@ Bazooka comes with built-in disruption strategies. You can configure them in `co
 
 ### Latency Disruption
 
-Add a random delay to your application
+Add a delay to your application.
 
 ### Exception Disruption
 
-Throw a configured exception:
+Throw a prepared exception.
 
 ---
 
