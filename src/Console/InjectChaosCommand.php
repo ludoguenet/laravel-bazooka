@@ -7,15 +7,6 @@ namespace LaravelJutsu\Bazooka\Console;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
-use PhpParser\Node;
-use PhpParser\Node\Expr\StaticCall;
-use PhpParser\Node\Name\FullyQualified;
-use PhpParser\Node\Stmt\Expression;
-use PhpParser\Node\Stmt\Namespace_;
-use PhpParser\NodeTraverser;
-use PhpParser\NodeVisitor\ParentConnectingVisitor;
-use PhpParser\ParserFactory;
-use PhpParser\PrettyPrinter;
 use Symfony\Component\Finder\SplFileInfo;
 
 class InjectChaosCommand extends Command
@@ -98,7 +89,11 @@ class InjectChaosCommand extends Command
 
         foreach ($files as $file) {
             if ($file->getExtension() === 'php') {
-                $injectedCount += $this->injectChaosIntoFile($file);
+                $injectedInFile = $this->injectChaosIntoFile($file);
+                $injectedCount += $injectedInFile;
+                if ($injectedInFile > 0) {
+                    $this->info("Injected chaos into {$file->getRelativePathname()}");
+                }
                 $processedCount++;
             }
         }
@@ -109,23 +104,50 @@ class InjectChaosCommand extends Command
     private function injectChaosIntoFile(SplFileInfo $file): int
     {
         try {
-            $parser = (new ParserFactory)->createForNewestSupportedVersion();
-            $traverser = new NodeTraverser;
-            $traverser->addVisitor(new ParentConnectingVisitor);
-
-            $ast = $traverser->traverse($parser->parse($file->getContents()));
+            $content = $file->getContents();
             $injectedCount = 0;
-            $modified = false;
 
-            foreach ($ast as $node) {
-                if ($node instanceof Namespace_) {
-                    $modified = $this->processNamespaceNode($node, $injectedCount);
+            // Use regex to find all method definitions and inject chaos
+            $pattern = '/public\s+function\s+(\w+)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/';
+
+            // Find all method positions
+            preg_match_all($pattern, $content, $matches, PREG_OFFSET_CAPTURE);
+
+            // Process matches in reverse order to maintain offsets
+            $positions = array_reverse($matches[0]);
+
+            foreach ($positions as $match) {
+                $methodStart = $match[1];
+                $methodBody = substr($content, $methodStart);
+
+                // Find opening brace position
+                $bracePos = strpos($methodBody, '{') + 1;
+                $insertPosition = $methodStart + $bracePos;
+
+                // Check if method already has chaos
+                $nextChunk = substr($content, $insertPosition, 100);
+                if (str_contains($nextChunk, 'LaravelJutsu\\Bazooka\\Facades\\Bazooka::chaos()')) {
+                    continue;
+                }
+
+                // Insert chaos only by random chance
+                if (mt_rand() / mt_getrandmax() < $this->probability) {
+                    // Get the indentation from the next line
+                    if (preg_match('/\n(\s+)/', $nextChunk, $indentMatch)) {
+                        $indent = $indentMatch[1];
+
+                        // Create the chaos line with proper indentation
+                        $chaosLine = "\n{$indent}\\LaravelJutsu\\Bazooka\\Facades\\Bazooka::chaos();";
+
+                        // Insert the chaos at the beginning of the method body, after {
+                        $content = substr_replace($content, $chaosLine, $insertPosition, 0);
+                        $injectedCount++;
+                    }
                 }
             }
 
-            if ($modified) {
-                $this->saveModifiedFile($file, $ast);
-                $this->info("Injected chaos into {$file->getRelativePathname()}");
+            if ($injectedCount > 0) {
+                File::put($file->getPathname(), $content);
             }
 
             return $injectedCount;
@@ -134,76 +156,5 @@ class InjectChaosCommand extends Command
 
             return 0;
         }
-    }
-
-    private function processNamespaceNode(Namespace_ $namespace, int &$injectedCount): bool
-    {
-        $modified = false;
-        foreach ($namespace->stmts as $stmt) {
-            if ($stmt instanceof Node\Stmt\Class_) {
-                foreach ($stmt->stmts as $method) {
-                    if ($method instanceof Node\Stmt\ClassMethod
-                        && ! $this->methodHasChaos($method)
-                        && mt_rand() / mt_getrandmax() < $this->probability
-                    ) {
-                        $this->injectChaosIntoMethod($method);
-                        $modified = true;
-                        $injectedCount++;
-                    }
-                }
-            }
-        }
-
-        return $modified;
-    }
-
-    private function saveModifiedFile(SplFileInfo $file, array $ast): void
-    {
-        $printer = new PrettyPrinter\Standard([
-            'newline_at_end_of_file' => true,
-        ]);
-
-        $newCode = $printer->prettyPrintFile($ast);
-        $newCode = preg_replace('/}\n\s*\n\s*(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n", $newCode);
-        $newCode = preg_replace('/}\n(?=    (?:public|private|protected|\/\*\*|\}))/m', "}\n\n", $newCode);
-        $newCode = rtrim($newCode)."\n";
-
-        File::put($file->getPathname(), $newCode);
-    }
-
-    private function injectChaosIntoMethod(Node\Stmt\ClassMethod $method): void
-    {
-        if (! isset($method->stmts)) {
-            $method->stmts = [];
-        }
-
-        $chaosCall = new Expression(
-            new StaticCall(
-                new FullyQualified('LaravelJutsu\\Bazooka\\Facades\\Bazooka'),
-                'chaos'
-            )
-        );
-
-        array_unshift(
-            $method->stmts,
-            $chaosCall,
-            new Node\Stmt\Nop
-        );
-    }
-
-    private function methodHasChaos(Node\Stmt\ClassMethod $method): bool
-    {
-        foreach ($method->stmts ?? [] as $stmt) {
-            if ($stmt instanceof Expression
-                && $stmt->expr instanceof StaticCall
-                && $stmt->expr->class instanceof Node\Name
-                && $stmt->expr->class->toString() === 'LaravelJutsu\\Bazooka\\Facades\\Bazooka'
-                && $stmt->expr->name->toString() === 'chaos'
-            ) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

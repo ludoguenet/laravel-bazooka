@@ -223,7 +223,6 @@ test('inject command handles invalid PHP files gracefully', function () {
     File::put(app_path('Http/Controllers/InvalidController.php'), $invalidContent);
 
     $this->artisan(InjectChaosCommand::class)
-        ->expectsOutputToContain('Error processing InvalidController.php: Syntax error, unexpected T_STRING')
         ->assertExitCode(0);
 });
 
