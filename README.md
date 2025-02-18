@@ -1,4 +1,12 @@
-# Laravel Bazooka 🔫
+<p align="center"><img src="/art/logo.png" alt="Logo Laravel Bazooka"></p>
+
+<p align="center">
+    <a href="https://packagist.org/packages/laraveljutsu/bazooka"><img src="https://img.shields.io/packagist/dt/laraveljutsu/bazooka" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/laraveljutsu/bazooka"><img src="https://img.shields.io/packagist/v/laraveljutsu/bazooka" alt="Latest Stable Version"></a>
+    <a href="https://packagist.org/packages/laraveljutsu/bazooka"><img src="https://img.shields.io/packagist/l/laraveljutsu/bazooka" alt="License"></a>
+</p>
+
+## Introduction
 
 **Inject chaos into your Laravel application with ease!**
 
