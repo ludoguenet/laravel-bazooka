@@ -107,39 +107,30 @@ class InjectChaosCommand extends Command
             $content = $file->getContents();
             $injectedCount = 0;
 
-            // Use regex to find all method definitions and inject chaos
             $pattern = '/public\s+function\s+(\w+)\s*\([^)]*\)\s*(?::\s*[^{]+)?\s*\{/';
 
-            // Find all method positions
             preg_match_all($pattern, $content, $matches, PREG_OFFSET_CAPTURE);
 
-            // Process matches in reverse order to maintain offsets
             $positions = array_reverse($matches[0]);
 
             foreach ($positions as $match) {
                 $methodStart = $match[1];
                 $methodBody = substr($content, $methodStart);
 
-                // Find opening brace position
                 $bracePos = strpos($methodBody, '{') + 1;
                 $insertPosition = $methodStart + $bracePos;
 
-                // Check if method already has chaos
                 $nextChunk = substr($content, $insertPosition, 100);
                 if (str_contains($nextChunk, 'LaravelJutsu\\Bazooka\\Facades\\Bazooka::chaos()')) {
                     continue;
                 }
 
-                // Insert chaos only by random chance
                 if (mt_rand() / mt_getrandmax() < $this->probability) {
-                    // Get the indentation from the next line
                     if (preg_match('/\n(\s+)/', $nextChunk, $indentMatch)) {
                         $indent = $indentMatch[1];
 
-                        // Create the chaos line with proper indentation
                         $chaosLine = "\n{$indent}\\LaravelJutsu\\Bazooka\\Facades\\Bazooka::chaos();";
 
-                        // Insert the chaos at the beginning of the method body, after {
                         $content = substr_replace($content, $chaosLine, $insertPosition, 0);
                         $injectedCount++;
                     }
