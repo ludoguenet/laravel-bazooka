@@ -32,7 +32,7 @@ Laravel Bazooka is a powerful Laravel package that allows you to inject controll
 You can install the package via Composer:
 
 ```bash
-composer require laravel-jutsu/bazooka
+composer require laraveljutsu/bazooka
 ```
 
 Laravel will automatically register the service provider.
