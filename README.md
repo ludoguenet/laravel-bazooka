@@ -1,4 +1,4 @@
-<p align="center"><img src="/art/logo.png" alt="Logo Laravel Bazooka" style="max-width: 100%;"></p>
+<p align="center"><img src="/art/logo-ghost.png" alt="Logo Laravel Bazooka" style="max-width: 100%;"></p>
 
 <p align="center">
     <a href="https://packagist.org/packages/laraveljutsu/bazooka"><img src="https://img.shields.io/packagist/dt/laraveljutsu/bazooka" alt="Total Downloads"></a>
