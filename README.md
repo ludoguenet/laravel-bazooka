@@ -199,7 +199,7 @@ This package is open-source software licensed under the [MIT License](LICENSE).
 
 ## Credits
 
-- Developed by [ludo](https://github.com/ludoguenet)
+- Developed by [ludo 🐆](https://twitter.com/LaravelJutsu)
 - Inspired by the need for chaos engineering in Laravel applications.
 
 ---
